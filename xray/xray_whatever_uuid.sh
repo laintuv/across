@@ -16,16 +16,21 @@ vmesstcppath="${uuid}-vmesstcp"
 vmesswspath="${uuid}-vmess"
 vmessh2path="${uuid}-vmessh2"
 shadowsockspath="${uuid}-ss"
-configxray=${configxray:-https://raw.githubusercontent.com/azoway/across/main/xray/etc/xray.json}
-configcaddy=${configcaddy:-https://raw.githubusercontent.com/azoway/across/main/xray/etc/caddy.json}
+configxray=${configxray:-https://raw.githubusercontent.com/laintuv/across/main/xray/etc/xray.json}
+configcaddy=${configcaddy:-https://raw.githubusercontent.com/laintuv/across/main/xray/etc/caddy.json}
 ########
 
 function install_xray_caddy(){
     # xray
     bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u root
     # caddy
-    caddyURL="$(wget -qO- https://api.github.com/repos/caddyserver/caddy/releases | grep -E "browser_download_url.*linux_$(dpkg --print-architecture)\.deb" | cut -f4 -d\" | head -n1)"
+    caddyURL="$(wget -qO- https://api.github.com/repos/caddyserver/caddy/releases | grep -E "browser_download_url.*2.5.2_linux_$(dpkg --print-architecture)\.deb" | cut -f4 -d\" | head -n1)"
+    naivecaddyURL="$(wget -qO- https://api.github.com/repos/lxhao61/integrated-examples/releases | grep -E "browser_download_url.*20220720/caddy-linux-$(dpkg --print-architecture)\.tar.gz" | cut -f4 -d\" | head -n1)"
     wget -O $TMPFILE $caddyURL && dpkg -i $TMPFILE
+    rm -rf /usr/bin/caddy
+    wget -O caddy.tar.gz $naivecaddyURL
+    tar -zxf caddy.tar.gz -C /usr/bin && chmod +x /usr/bin/caddy
+    rm -f caddy.tar.gz
     sed -i "s/caddy\/Caddyfile$/caddy\/Caddyfile\.json/g" /lib/systemd/system/caddy.service && systemctl daemon-reload
 }
 
@@ -44,7 +49,7 @@ function cert_acme(){
     curl https://get.acme.sh | sh && source  ~/.bashrc
     ~/.acme.sh/acme.sh --upgrade --auto-upgrade
     ~/.acme.sh/acme.sh --register-account -m my@example.com
-    ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
+	~/.acme.sh/acme.sh --set-default-ca --server letsencrypt
     ~/.acme.sh/acme.sh --issue -d $domain --standalone --keylength ec-256 --pre-hook "systemctl stop caddy xray" --post-hook "~/.acme.sh/acme.sh --installcert -d $domain --ecc --fullchain-file /usr/local/etc/xray/$domain.crt --key-file /usr/local/etc/xray/$domain.key --reloadcmd \"systemctl restart caddy xray\""
     ~/.acme.sh/acme.sh --installcert -d $domain --ecc --fullchain-file /usr/local/etc/xray/$domain.crt --key-file /usr/local/etc/xray/$domain.key --reloadcmd "systemctl restart xray"
 }
