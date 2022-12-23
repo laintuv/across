@@ -1,20 +1,33 @@
 {
-    "log": {"loglevel": "warning"},
+    "log": {"loglevel": "none"},
     "inbounds": [
         {
             "port": 443,"protocol": "vless",
             "settings": {
                 "clients": [{"id": "$uuid","flow": "$xtlsflow"}],"decryption": "none",
                 "fallbacks": [
-                    {"name": "$domain","dest": "@trojan"},
-                    {"name": "$domain","dest": "@trojanws","path": "/$trojanpath"},
-                    {"name": "$domain","dest": "@vlessws","path": "/$vlesspath"},
-                    {"name": "$domain","dest": "@vmesstcp","path": "/$vmesstcppath"},
-                    {"name": "$domain","dest": "@vmessws","path": "/$vmesswspath"},  
-                    {"name": "$domain","dest": 50003,"path": "/$shadowsockspath"}
+                    {"dest": "@trojan"},
+                    {"dest": "@trojanws","path": "/$trojanpath"},
+                    {"dest": "@vlessws","path": "/$vlesspath"},
+                    {"dest": "@vmesstcp","path": "/$vmesstcppath"},
+                    {"dest": "@vmessws","path": "/$vmesswspath"},  
+                    {"dest": 50003,"path": "/$shadowsockspath"}
                 ]
             },
             "streamSettings": {"network": "tcp","security": "xtls","xtlsSettings": {"alpn": ["h2","http/1.1"],"minVersion": "1.2","certificates": [{"certificateFile": "/usr/local/etc/xray/$domain.crt","keyFile": "/usr/local/etc/xray/$domain.key"}]}}
+        },
+        {
+            "port": 80,"protocol": "vless",
+            "settings": {
+                "clients": [{"id": "$uuid"}],"decryption": "none",
+                "fallbacks": [
+                    {"dest": "@vlessws","path": "/$vlesspath"},
+                    {"dest": "@vmesstcp","path": "/$vmesstcppath"},
+                    {"dest": "@vmessws","path": "/$vmesswspath"},  
+                    {"dest": 50003,"path": "/$shadowsockspath"}
+                ]
+            },
+            "streamSettings": {"network": "tcp","security": "none"}
         },
         {
             "listen": "@trojan","protocol": "trojan",
@@ -34,7 +47,7 @@
         {
             "port": 50001,"listen": "127.0.0.1","protocol": "vless",
             "settings": {"clients": [{"id": "$uuid"}],"decryption": "none"},
-            "streamSettings": {"network": "h2","httpSettings": {"host": ["$domain"],"path": "/$vlessh2path"}}
+            "streamSettings": {"network": "h2","httpSettings": {"path": "/$vlessh2path"}}
         },
         {
             "listen": "@vmesstcp","protocol": "vmess",
@@ -49,7 +62,7 @@
         {
             "port": 50002,"listen": "127.0.0.1","protocol": "vmess",
             "settings": {"clients": [{"id": "$uuid"}]},
-            "streamSettings": {"network": "h2","httpSettings": {"host": ["$domain"],"path": "/$vmessh2path"}}
+            "streamSettings": {"network": "h2","httpSettings": {"path": "/$vmessh2path"}}
         },
         {
             "port": "50003","listen": "127.0.0.1","tag": "onetag","protocol": "dokodemo-door",
