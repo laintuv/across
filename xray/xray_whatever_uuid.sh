@@ -119,6 +119,7 @@ UUID for all: $uuid
 Port 80 for Non-TLS: Vless WS, Vmess WS, Vmess HTTP, Shadowsocks
 Port 443 for TLS: Trojan, Trojan WS, Vless WS, Vless H2, Vmess WS, Vmess H2, Vmess HTTP, Shadowsocks, Naive
 CDN support for WS only
+UDP supported
 EOF
 
     cat $TMPFILE | tee /var/log/${TMPFILE##*/} && echo && echo $(date) Info saved: /var/log/${TMPFILE##*/}
