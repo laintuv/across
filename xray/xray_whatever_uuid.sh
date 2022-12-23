@@ -92,29 +92,33 @@ vmessh2info="$(echo "vmess://$(base64 -w 0 $TMPFILE)")"
 
     cat <<EOF >$TMPFILE
 $(date) $domain vless:
-uuid: $uuid
 wspath: $vlesspath
 h2path: $vlessh2path
 
 $(date) $domain vmess:
-uuid: $uuid
 tcppath: $vmesstcppath
 ws+tls: $vmesswsinfo
 h2+tls: $vmessh2info
 
 $(date) $domain trojan:
-password: $uuid
-path: $trojanpath
-nowsLink: trojan://$uuid@$domain:443#$domain-trojan
+trojan://$uuid@$domain:443#$domain-trojan
+trojan-ws: trojan://$uuid@$domain:443?security=tls&type=ws&path=$trojanpath#$domain-trojan-ws
+
+$(date) $domain shadowsocks ws tls:   
+ss://$(echo -n "${ssmethod}:${uuid}" | base64 | tr "\n" " " | sed s/[[:space:]]//g | tr -- "+/=" "-_ " | sed -e 's/ *$//g')@${domain}:443?plugin=v2ray-plugin%3Bpath%3D%2F${shadowsockspath}%3Bhost%3D${domain}%3Btls#${domain}
 
 $(date) $domain shadowsocks:   
-ss://$(echo -n "${ssmethod}:${uuid}" | base64 | tr "\n" " " | sed s/[[:space:]]//g | tr -- "+/=" "-_ " | sed -e 's/ *$//g')@${domain}:443?plugin=v2ray-plugin%3Bpath%3D%2F${shadowsockspath}%3Bhost%3D${domain}%3Btls#${domain}
+ss://$(echo -n "${ssmethod}:${uuid}" | base64 | tr "\n" " " | sed s/[[:space:]]//g | tr -- "+/=" "-_ " | sed -e 's/ *$//g')@${domain}:80?plugin=v2ray-plugin%3Bpath%3D%2F${shadowsockspath}%3Bhost%3D${domain}%3Bhttp#${domain}
 
 $(date) $domain naiveproxy:
 probe_resistance: $uuid.com
-proxy: https://$uuid:$uuid@$domain
+naive+https://$uuid:$uuid@$domain:443
 
 $(date) Visit: https://$domain
+UUID for all: $uuid
+Port 80 for Non-TLS: Vless WS, Vmess WS, Vmess HTTP, Shadowsocks
+Port 443 for TLS: Trojan, Trojan WS, Vless WS, Vless H2, Vmess WS, Vmess H2, Vmess HTTP, Shadowsocks, Naive
+CDN support for WS only
 EOF
 
     cat $TMPFILE | tee /var/log/${TMPFILE##*/} && echo && echo $(date) Info saved: /var/log/${TMPFILE##*/}
